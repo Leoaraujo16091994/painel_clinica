@@ -57,9 +57,9 @@ onMounted(() => {
 
 /* SALAS */
 const salas = ref([
-  { numero: 1, nome: 'Leonardo Amancio de Araujo' },
-  { numero: 2, nome: 'Ingryd Rocha de Araujo' },
-  { numero: 3, nome: 'Olivia Rocha de Araujo' },
+  { numero: 1, nome: 'Leonardo Rocha nome completo' },
+  { numero: 2, nome: 'Ingryd Teste nome completo' },
+  { numero: 3, nome: 'Francisca Rocha nome completo' },
   { numero: 4, nome: 'Carlos Oliveira nome completo' },
   { numero: 5, nome: 'Ana Paula Santos nome completo' },
   { numero: 6, nome: 'Rafael Gomes nome completo' },

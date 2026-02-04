@@ -1,5 +1,14 @@
 <template>
   <v-app>
+    <v-snackbar
+  v-model="snackbar.show"
+  :color="snackbar.color"
+  location="top"
+  timeout="3000"
+>
+  {{ snackbar.text }}
+</v-snackbar>
+
     <!-- Menu lateral -->
     <v-navigation-drawer
       v-model="drawer"
@@ -70,8 +79,8 @@
 
 
 <script setup>
-import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { ref, provide } from 'vue'
 
 const drawer = ref(true);
 const router = useRouter();
@@ -79,6 +88,15 @@ const router = useRouter();
 function irPara(path) {
   router.push(path);
 }
+
+const snackbar = ref({
+  show: false,
+  text: '',
+  color: 'success'
+})
+
+provide('snackbar', snackbar)
+
 </script>
 <style scoped>
 .drawer-custom {

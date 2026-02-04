@@ -2,70 +2,59 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Paciente;
 use Illuminate\Http\Request;
 
 class PacienteController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-       $pacientes = [
-        ['id' => 1, 'nome' => 'Leo Araujo', 'email' => 'joao@email.com', 'telefone' => '1111-1111'],
-        ['id' => 2, 'nome' => 'Maria Souza', 'email' => 'maria@email.com', 'telefone' => '2222-2222'],
-        ['id' => 3, 'nome' => 'Pedro Lima', 'email' => 'pedro@email.com', 'telefone' => '3333-3333']
-    ];
-
-    // Retorna JSON para o frontend
-    return response()->json($pacientes);
+        return response()->json(
+            Paciente::orderBy('created_at', 'desc')->get()
+        );
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $dados = $request->validate([
+            'nome_completo' => 'required|string|max:255',
+            'dias_semana'   => 'required|integer',
+            'turno'         => 'required|integer',
+            'sala'          => 'required|integer',
+        ]);
+
+        $paciente = Paciente::create($dados);
+
+        return response()->json($paciente, 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+        return response()->json(
+            Paciente::findOrFail($id)
+        );
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $paciente = Paciente::findOrFail($id);
+
+        $dados = $request->validate([
+            'nome_completo' => 'required|string|max:255',
+            'dias_semana'   => 'required|integer',
+            'turno'         => 'required|integer',
+            'sala'          => 'required|integer',
+        ]);
+
+        $paciente->update($dados);
+
+        return response()->json($paciente);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy($id)
     {
-        //
-    }
+        Paciente::findOrFail($id)->delete();
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return response()->json(null, 204);
     }
 }

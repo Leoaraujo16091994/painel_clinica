@@ -1,14 +1,19 @@
 <template>
-  <!-- Card principal -->
+  <v-snackbar
+  v-model="alertSucesso"
+  color="success"
+  location="top"
+  timeout="3000"
+>
+  Paciente salvo com sucesso
+</v-snackbar>
+   
+
   <v-card>
-    <!-- Cabeçalho -->
     <v-card-title class="d-flex align-center justify-space-between">
       <span>Lista de Pacientes</span>
 
-      
       <div class="d-flex align-center">
-        <!-- Campo de pesquisa -->
-         
         <v-text-field
           v-model="filtroNome"
           label="Pesquisar por nome"
@@ -22,154 +27,138 @@
         <v-btn
           color="primary"
           prepend-icon="mdi-plus"
-          @click="abrirModal"
+          @click="dialog = true"
         >
           Cadastrar
         </v-btn>
+
+        
       </div>
     </v-card-title>
 
     <v-divider />
 
-    <!-- Tabela -->
     <v-data-table
-      :headers="headers"
-      :items="pacientesFiltrados"
-      item-key="id"
-      class="elevation-1"
-    >
-      <template #item.acoes="{ item }">
-        <v-btn
-          size="small"
-          icon="mdi-pencil"
-          variant="text"
-          color="primary"
-        />
+  :headers="headers"
+  :items="pacientesFiltrados"
+  item-key="id"
+>
+  <template #item.dias_semana="{ item }">
+    {{ diasMap[item.dias_semana] || '-' }}
+  </template>
 
-        <v-btn
-          size="small"
-          icon="mdi-delete"
-          variant="text"
-          color="red"
-          @click="deletarPaciente(item.id)"
-        />
-      </template>
-    </v-data-table>
+  <template #item.sala="{ item }">
+    {{ salasMap[item.sala] || '-' }}
+  </template>
+
+  <template #item.turno="{ item }">
+    {{ turnoMap[item.turno] || '-' }}
+  </template>
+
+  <template #item.acoes="{ item }">
+    <v-btn
+      size="small"
+      icon="mdi-delete"
+      variant="text"
+      color="red"
+      @click="deletarPaciente(item.id)"
+    />
+  </template>
+</v-data-table>
+
   </v-card>
 
-  <!-- MODAL (fora do card, MUITO importante) -->
-  <v-dialog v-model="dialog" max-width="500">
-    <v-card>
-      <v-card-title>Cadastrar Paciente</v-card-title>
-
-      <v-card-text>
-        <v-form v-model="formValido">
-          <v-text-field
-            label="Nome"
-            v-model="form.nome"
-            :rules="[v => !!v || 'Nome é obrigatório']"
-            required
-          />
-
-          <v-select
-            label="Dias de Atendimento"
-            v-model="form.turno"
-            :items="opcoesTurno"
-            item-title="label"
-            item-value="value"
-            :rules="[v => !!v || 'Campo obrigatório']"
-            required
-          />
-        </v-form>
-      </v-card-text>
-
-      <v-divider />
-
-      <v-card-actions class="justify-end">
-        <v-btn variant="text" @click="fecharModal">
-          Cancelar
-        </v-btn>
-        <v-btn
-          color="primary"
-          :disabled="!formValido"
-          @click="salvar"
-        >
-          Salvar
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+  <!-- MODAL -->
+  <PacienteCreate
+    v-model="dialog"
+    @salvo="onPacienteSalvo"
+  />
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import PacienteService from '@/services/PacienteService'
+import PacienteCreate from './PacienteCreate.vue'
+import { inject } from 'vue'
 
-/* ------------------ LISTAGEM ------------------ */
+const snackbar = inject('snackbar')
+
+/* estado */
 const pacientes = ref([])
 const filtroNome = ref('')
+const dialog = ref(false)
+const alertSucesso = ref(false)
 
+const diasMap = {
+  1: 'Seg, Qua, Sex',
+  2: 'Ter, Qui, Sab',
+}
+
+const salasMap = {
+  1: 'Sala 01',
+  2: 'Sala 02',
+  3: 'Sala 03',
+  4: 'Sala 04',
+  5: 'Sala 05',
+  6: 'Sala 06',
+  7: 'Sala 07',
+  8: 'Sala 08',
+  9: 'Sala 09',
+  10: 'Sala 10',
+  11: 'Sala 11',
+  12: 'Sala C',
+}
+
+const turnoMap = {
+  1: 'Manhã',
+  2: 'Tarde',
+  3: 'Noite',
+}
+
+
+/* tabela */
 const headers = [
-  { title: 'Nome', key: 'nome' },
-  { title: 'Email', key: 'email' },
-  { title: 'Telefone', key: 'telefone' },
+  { title: 'Nome', key: 'nome_completo' },
+  { title: 'Dias da semana', key: 'dias_semana' },
+  { title: 'Sala', key: 'sala' },
+  { title: 'Turno', key: 'turno' },
   { title: 'Ações', key: 'acoes', sortable: false },
 ]
 
+/* filtros */
 const pacientesFiltrados = computed(() => {
   if (!filtroNome.value) return pacientes.value
-
   return pacientes.value.filter(p =>
     p.nome.toLowerCase().includes(filtroNome.value.toLowerCase())
   )
 })
 
+/* ações */
 function carregarPacientes() {
   PacienteService.listar()
     .then(res => pacientes.value = res.data)
-    .catch(err => console.error(err))
 }
 
-/* ------------------ MODAL ------------------ */
-const dialog = ref(false)
-const formValido = ref(false)
+function onPacienteSalvo() {
+  carregarPacientes()
+  alertSucesso.value = true
 
-const form = ref({
-  nome: '',
-  turno: null,
-})
-
-const opcoesTurno = [
-  { label: '1 - Seg, Qua, Sex', value: 1 },
-  { label: '2 - Ter, Qui, Sab', value: 2 },
-]
-
-function abrirModal() {
-  dialog.value = true
+  snackbar.value.text = 'Paciente salvo com sucesso'
+  snackbar.value.color = 'success'
+  snackbar.value.show = true
 }
 
-function fecharModal() {
-  dialog.value = false
-  form.value = { nome: '', turno: null }
-}
-
-function salvar() {
-  console.log('Salvar paciente:', form.value)
-
-  // futuramente:
-  // PacienteService.criar(form.value).then(carregarPacientes)
-
-  fecharModal()
-}
-
-/* ------------------ AÇÕES ------------------ */
 function deletarPaciente(id) {
   if (confirm('Deseja deletar este paciente?')) {
     PacienteService.deletar(id)
       .then(carregarPacientes)
-      .catch(err => console.error(err))
   }
 }
 
 onMounted(carregarPacientes)
 </script>
+
+
+<style>
+
+</style>

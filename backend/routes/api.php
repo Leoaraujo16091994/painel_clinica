@@ -22,4 +22,4 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 
 // Rotas de API para pacientes
-Route::apiResource('pacientes', PacienteController::class);
+Route::apiResource('paciente', PacienteController::class);
