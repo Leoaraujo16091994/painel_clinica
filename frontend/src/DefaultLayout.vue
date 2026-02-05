@@ -51,6 +51,13 @@
           class="menu-item"
           @click="irPara('/painel')"
         />
+
+        <v-list-item
+          prepend-icon="mdi-account-multiple"
+          title="Painel TELA CHEIA"
+          class="menu-item"
+          @click="irPara('/painel-tela-cheia')"
+        />
       </v-list>
     </v-navigation-drawer>
 

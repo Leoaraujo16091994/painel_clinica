@@ -43,11 +43,11 @@ const router = createRouter({
       children: [
         {
           path: '',
-          redirect: '/pacientes',
+          redirect: '/paciente',
         },
         {
-          path: 'pacientes',
-          name: 'pacientes',
+          path: 'paciente',
+          name: 'paciente',
           component: PacienteList,
         },
         {

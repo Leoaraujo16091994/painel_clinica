@@ -1,7 +1,9 @@
 <template>
   <v-dialog v-model="dialog" max-width="500">
     <v-card>
-      <v-card-title>Cadastrar Paciente</v-card-title>
+      <v-card-title>
+        {{ form.id ? 'Editar Paciente' : 'Cadastrar Paciente' }}
+      </v-card-title>
 
       <v-card-text>
         <v-form v-model="formValido">
@@ -32,7 +34,7 @@
           <v-select
             label="Turno"
             v-model="form.turno"
-            :items="turno"
+            :items="turnos"
             item-title="label"
             item-value="value"
             :rules="[(v) => !!v || 'Campo obrigatório']"
@@ -41,13 +43,13 @@
       </v-card-text>
 
       <v-card-actions class="justify-end">
-        <v-btn variant="elevated" color="error" @click="fechar">
+        <v-btn color="error" variant="elevated" @click="fechar">
           Cancelar
         </v-btn>
 
         <v-btn
-          variant="elevated"
           color="success"
+          variant="elevated"
           :disabled="!formValido"
           @click="salvar"
         >
@@ -59,7 +61,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import PacienteService from "@/services/PacienteService";
 
 /* props */
@@ -68,12 +70,16 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
+  paciente: {
+    type: Object,
+    default: null,
+  },
 });
 
 /* emits */
 const emit = defineEmits(["update:modelValue", "salvo"]);
 
-/* v-model proxy */
+/* dialog proxy */
 const dialog = computed({
   get: () => props.modelValue,
   set: (value) => emit("update:modelValue", value),
@@ -83,12 +89,14 @@ const dialog = computed({
 const formValido = ref(false);
 
 const form = ref({
+  id: null,
   nome_completo: "",
   dias_semana: null,
   sala: null,
   turno: null,
 });
 
+/* opções */
 const opcoesDia = [
   { label: "1 - Seg, Qua, Sex", value: 1 },
   { label: "2 - Ter, Qui, Sab", value: 2 },
@@ -109,14 +117,33 @@ const salas = [
   { label: "Sala C", value: 12 },
 ];
 
-const turno = [
+const turnos = [
   { label: "Manhã", value: 1 },
   { label: "Tarde", value: 2 },
   { label: "Noite", value: 3 },
 ];
 
+/* preencher ao editar */
+watch(
+  () => props.paciente,
+  (novoPaciente) => {
+    if (novoPaciente) {
+      form.value = {
+        id: novoPaciente.id,
+        nome_completo: novoPaciente.nome_completo,
+        dias_semana: novoPaciente.dias_semana,
+        sala: novoPaciente.sala,
+        turno: novoPaciente.turno,
+      };
+    }
+  },
+  { immediate: true }
+);
+
+/* ações */
 function limpar() {
   form.value = {
+    id: null,
     nome_completo: "",
     dias_semana: null,
     sala: null,
@@ -130,9 +157,20 @@ function fechar() {
 }
 
 function salvar() {
-  PacienteService.criar(form.value).then(() => {
-    emit("salvo");
-    fechar();
-  });
+  if (form.value.id) {
+    // EDITAR
+    PacienteService.atualizar(form.value.id, form.value)
+      .then(() => {
+        emit("salvo");
+        fechar();
+      });
+  } else {
+    // CADASTRAR
+    PacienteService.criar(form.value)
+      .then(() => {
+        emit("salvo");
+        fechar();
+      });
+  }
 }
 </script>
