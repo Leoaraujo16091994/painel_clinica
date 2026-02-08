@@ -30,6 +30,8 @@ import DefaultLayout from '@/DefaultLayout.vue'
 import PacienteList from '@/views/pacientes/PacienteList.vue'
 import PainelView from '@/views/painel/Painel.vue'
 import PainelTelaCheia from '@/views/painel/PainelTelaCheia.vue'
+import Chegada from '@/views/chegada/Chegada.vue'
+import Chamada from '@/views/chamada/Chamada.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -50,16 +52,22 @@ const router = createRouter({
           name: 'paciente',
           component: PacienteList,
         },
+         {
+          path: 'chegada',
+          name: 'chegada',
+          component: Chegada,
+        },
         {
           path: 'chamada',
           name: 'chamada',
-          component: () => import('@/views/chamada/Chamada.vue'),
+          component:Chamada
+          // component: () => import('@/views/chamada/Chamada.vue'),
         },
         {
-      path: '/painel',
-      name: 'painel',
-      component: PainelView,
-    },
+          path: '/painel',
+          name: 'painel',
+          component: PainelView,
+        },
       ],
     },
 

@@ -35,9 +35,14 @@
           prepend-icon="mdi-account-multiple"
           title="Pacientes"
           class="menu-item"
-          @click="irPara('/pacientes')"
+          @click="irPara('/paciente')"
         />
-
+        <v-list-item
+          prepend-icon="mdi-account-multiple"
+          title="Informar Chegada"
+          class="menu-item"
+          @click="irPara('/chegada')"
+        />
          <v-list-item
           prepend-icon="mdi-account-multiple"
           title="Chamar Pacientes"

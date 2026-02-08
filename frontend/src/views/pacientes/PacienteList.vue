@@ -44,7 +44,7 @@
   <!-- MODAL CONFIRMAÇÃO DELETE -->
   <v-dialog v-model="dialogDelete" max-width="420">
     <v-card>
-      <v-card-title class="text-h6">
+      <v-card-title class="text-h6 bg-primary text-white">
         Confirmar exclusão
       </v-card-title>
 
@@ -54,11 +54,11 @@
       </v-card-text>
 
       <v-card-actions class="justify-end">
-        <v-btn variant="text" @click="dialogDelete = false">
+        <v-btn color="red" variant="elevated" @click="dialogDelete = false">
           Cancelar
         </v-btn>
 
-        <v-btn color="red" variant="elevated" @click="confirmarDelete">
+        <v-btn color="green" variant="elevated" @click="confirmarDelete">
           Excluir
         </v-btn>
       </v-card-actions>

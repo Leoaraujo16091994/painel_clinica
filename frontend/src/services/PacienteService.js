@@ -1,8 +1,6 @@
 import axios from 'axios'
 import api from '../api' // importa o Axios do arquivo api.js
 
-
-// Funções para cada operação do CRUD
 export default {
   listar() {
     return api.get('/paciente')

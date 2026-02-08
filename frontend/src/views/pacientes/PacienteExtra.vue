@@ -2,39 +2,25 @@
   <v-dialog v-model="dialog" max-width="500">
     <v-card>
       <v-card-title class="text-h6 bg-primary text-white">
-        {{ form.id ? 'Editar Paciente' : 'Cadastrar Paciente' }}
+        {{ form.id ? "Editar Paciente" : "Cadastrar Paciente" }}
       </v-card-title>
 
       <v-card-text>
         <v-form v-model="formValido">
-          <v-text-field
-            label="Nome"
-            v-model="form.nome_completo"
-            :rules="[(v) => !!v || 'Nome é obrigatório']"
-          />
-
-          <v-select
-            label="Dias de Atendimento"
-            v-model="form.dias_semana"
-            :items="opcoesDia"
-            item-title="label"
-            item-value="value"
-            :rules="[(v) => !!v || 'Campo obrigatório']"
+          <v-autocomplete
+            v-model="form.paciente_id"
+            :items="pacientes"
+            item-title="nome_completo"
+            item-value="id"
+            label="Paciente"
+            clearable
+            :rules="[(v) => !!v || 'Paciente é obrigatório']"
           />
 
           <v-select
             label="Sala"
             v-model="form.sala"
             :items="salas"
-            item-title="label"
-            item-value="value"
-            :rules="[(v) => !!v || 'Campo obrigatório']"
-          />
-
-          <v-select
-            label="Turno"
-            v-model="form.turno"
-            :items="turnos"
             item-title="label"
             item-value="value"
             :rules="[(v) => !!v || 'Campo obrigatório']"
@@ -59,20 +45,16 @@
     </v-card>
   </v-dialog>
 </template>
-
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import PacienteService from "@/services/PacienteService";
+import PacienteDiaService from "@/services/PacienteDiaService";
 
 /* props */
 const props = defineProps({
   modelValue: {
     type: Boolean,
     required: true,
-  },
-  paciente: {
-    type: Object,
-    default: null,
   },
 });
 
@@ -89,19 +71,14 @@ const dialog = computed({
 const formValido = ref(false);
 
 const form = ref({
-  id: null,
-  nome_completo: "",
-  dias_semana: null,
+  paciente_id: null,
   sala: null,
-  turno: null,
 });
 
-/* opções */
-const opcoesDia = [
-  { label: "1 - Seg, Qua, Sex", value: 1 },
-  { label: "2 - Ter, Qui, Sab", value: 2 },
-];
+/* pacientes para o autocomplete */
+const pacientes = ref([]);
 
+/* salas */
 const salas = [
   { label: "Sala 01", value: 1 },
   { label: "Sala 02", value: 2 },
@@ -117,37 +94,18 @@ const salas = [
   { label: "Sala C", value: 12 },
 ];
 
-const turnos = [
-  { label: "Manhã", value: 1 },
-  { label: "Tarde", value: 2 },
-  { label: "Noite", value: 3 },
-];
-
-/* preencher ao editar */
-watch(
-  () => props.paciente,
-  (novoPaciente) => {
-    if (novoPaciente) {
-      form.value = {
-        id: novoPaciente.id,
-        nome_completo: novoPaciente.nome_completo,
-        dias_semana: novoPaciente.dias_semana,
-        sala: novoPaciente.sala,
-        turno: novoPaciente.turno,
-      };
-    }
-  },
-  { immediate: true }
-);
+/* carregar pacientes ao abrir o modal */
+watch(dialog, (aberto) => {
+  if (aberto) {
+    carregarPacientes();
+  }
+});
 
 /* ações */
 function limpar() {
   form.value = {
-    id: null,
-    nome_completo: "",
-    dias_semana: null,
+    paciente_id: null,
     sala: null,
-    turno: null,
   };
 }
 
@@ -157,20 +115,18 @@ function fechar() {
 }
 
 function salvar() {
-  if (form.value.id) {
-    // EDITAR
-    PacienteService.atualizar(form.value.id, form.value)
-      .then(() => {
-        emit("salvo");
-        fechar();
-      });
-  } else {
-    // CADASTRAR
-    PacienteService.criar(form.value)
-      .then(() => {
-        emit("salvo");
-        fechar();
-      });
-  }
+  if (!formValido.value) return;
+
+  PacienteDiaService.criar(form.value).then(() => {
+    emit("salvo");
+    fechar();
+  });
+}
+
+/* services */
+function carregarPacientes() {
+  PacienteService.listar().then((res) => {
+    pacientes.value = res.data;
+  });
 }
 </script>
