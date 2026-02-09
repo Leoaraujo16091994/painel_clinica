@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\PacienteDia;
+use App\Events\PacienteChamado;
 
 class ChamadaController extends Controller
 {
@@ -20,14 +21,32 @@ class ChamadaController extends Controller
 
     public function chamar(int $id)
     {
-         // Médico chama o paciente
+        // Médico chama o paciente
         // Route::post('{id}/chamar', [ChamadaController::class, 'chamar']);
-       $pacienteDia = PacienteDia::findOrFail($id);
-
+        
+        $pacienteDia = PacienteDia::with('paciente')->findOrFail($id);
         $pacienteDia->update([
             'chamado' => true,
         ]);
 
+        // Evita chamar novamente
+    if ($pacienteDia->chamado_painel) {
+        return response()->json(['success' => false, 'message' => 'Paciente já chamado']);
+    }
+
+    // Atualiza o campo chamado_painel
+    $pacienteDia->update([
+        'chamado_painel' => true
+    ]);
+     
+
+        event(new PacienteChamado($pacienteDia));
+
+
+        logger()->info('EVENTO DISPARADO', [
+            'paciente' => $pacienteDia->id
+        ]);
+    
         return response()->json(['success' => true]);
     }
     

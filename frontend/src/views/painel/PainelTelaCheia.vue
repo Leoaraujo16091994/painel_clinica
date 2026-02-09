@@ -1,5 +1,4 @@
 <template>
-  <!-- TELA CHEIA -->
   <div class="painel-root">
     <!-- TOPO -->
     <header class="painel-header">
@@ -17,13 +16,14 @@
         v-for="sala in salas"
         :key="sala.numero"
         class="sala-card"
+        :class="{ piscar: sala.atualizado }"
       >
         <div class="sala-numero">
           SALA {{ sala.numero }}
         </div>
 
         <div class="sala-nome">
-          {{ sala.nome }}
+          {{ sala.nome || '—' }}
         </div>
       </div>
     </div>
@@ -33,7 +33,30 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
-/* DATA E HORA */
+/* ===============================
+   ESTADO
+================================ */
+const filaChamadas = ref([])
+const falando = ref(false)
+
+const salas = ref([
+  { numero: 1, nome: '', atualizado: false },
+  { numero: 2, nome: '', atualizado: false },
+  { numero: 3, nome: '', atualizado: false },
+  { numero: 4, nome: '', atualizado: false },
+  { numero: 5, nome: '', atualizado: false },
+  { numero: 6, nome: '', atualizado: false },
+  { numero: 7, nome: '', atualizado: false },
+  { numero: 8, nome: '', atualizado: false },
+  { numero: 9, nome: '', atualizado: false },
+  { numero: 10, nome: '', atualizado: false },
+  { numero: 11, nome: '', atualizado: false },
+  { numero: 12, nome: '', atualizado: false },
+])
+
+/* ===============================
+   DATA / HORA
+================================ */
 const dataAtual = ref('')
 const horaAtual = ref('')
 
@@ -50,26 +73,91 @@ function atualizarRelogio() {
   horaAtual.value = agora.toLocaleTimeString('pt-BR')
 }
 
+/* ===============================
+   FILA / VOZ
+================================ */
+function processarFila() {
+  if (falando.value) return
+  if (filaChamadas.value.length === 0) return
+
+  falando.value = true
+  const paciente = filaChamadas.value.shift()
+
+  atualizarSala(paciente)
+  falarPaciente(paciente)
+}
+
+async function falarPaciente(paciente) {
+  const texto = `Paciente ${paciente.nome}. Por favor, dirigir-se à sala ${paciente.sala}.`
+
+  const msg = new SpeechSynthesisUtterance(texto)
+  msg.lang = 'pt-BR'
+  msg.rate = 0.85
+  msg.pitch = 1.05
+  msg.volume = 1
+
+  const voices = await carregarVozes()
+
+  const vozGoogle =
+    voices.find(v => v.lang === 'pt-BR' && v.name.toLowerCase().includes('google')) ||
+    voices.find(v => v.lang === 'pt-BR')
+
+  if (vozGoogle) msg.voice = vozGoogle
+
+  msg.onend = () => {
+    falando.value = false
+    processarFila()
+  }
+
+  speechSynthesis.speak(msg)
+}
+
+/* ===============================
+   ATUALIZA SALA + PISCAR
+================================ */
+function atualizarSala(paciente) {
+  const sala = salas.value.find(s => s.numero === paciente.sala)
+  if (!sala) return
+
+  sala.nome = paciente.nome
+  sala.atualizado = true
+
+  setTimeout(() => {
+    sala.atualizado = false
+  }, 1200)
+}
+
+/* ===============================
+   VOZES
+================================ */
+function carregarVozes() {
+  return new Promise(resolve => {
+    const voices = speechSynthesis.getVoices()
+    if (voices.length) {
+      resolve(voices)
+    } else {
+      speechSynthesis.onvoiceschanged = () => {
+        resolve(speechSynthesis.getVoices())
+      }
+    }
+  })
+}
+
+/* ===============================
+   ECHO
+================================ */
 onMounted(() => {
   atualizarRelogio()
   setInterval(atualizarRelogio, 1000)
-})
 
-/* SALAS */
-const salas = ref([
-  { numero: 1, nome: 'Leonardo Rocha nome completo' },
-  { numero: 2, nome: 'Ingryd Teste nome completo' },
-  { numero: 3, nome: 'Francisca Rocha nome completo' },
-  { numero: 4, nome: 'Carlos Oliveira nome completo' },
-  { numero: 5, nome: 'Ana Paula Santos nome completo' },
-  { numero: 6, nome: 'Rafael Gomes nome completo' },
-  { numero: 7, nome: 'Maria Souza nome completo' },
-  { numero: 8, nome: 'Pedro Almeida nome completo' },
-  { numero: 9, nome: 'Juliana Pereira nome completo' },
-  { numero: 10, nome: 'João Silva nome completo' },
-  { numero: 11, nome: 'Patricia Rocha nome completo' },
-  { numero: 12, nome: 'Gumila Fernandes nome completo' },
-])
+  window.Echo
+    .channel('chamadas')
+    .listen('.PacienteChamado', (e) => {
+      console.log('EVENTO RECEBIDO', e)
+      filaChamadas.value.push(e.paciente)
+      processarFila()
+    })
+})
 </script>
 
 <style scoped>
@@ -102,14 +190,9 @@ const salas = ref([
   text-align: right;
 }
 
-.data {
-  font-size: 20px;
-  opacity: 0.9;
-}
-
+.data,
 .hora {
   font-size: 20px;
-  font-weight: bold;
 }
 
 /* GRID */
@@ -129,19 +212,38 @@ const salas = ref([
   display: flex;
   flex-direction: column;
   justify-content: center;
+  transition: background-color 0.3s;
 }
 
 .sala-numero {
-  font-size: 35px;
+  font-size: 37px;
   opacity: 0.8;
-  margin-bottom: 10px;
-  align-items: center;  
-  text-align: center;  
+  /* margin-bottom: 10px; */
+  text-align: center;
 }
 
 .sala-nome {
-  font-size: 40px;
+  font-size: 43px;
   font-weight: bold;
-  line-height: 1.3;
+  text-align: center;
+}
+
+/* ===============================
+   PISCAR DISCRETO
+================================ */
+.piscar {
+  animation: piscarVerde 0.6s ease-in-out 2;
+}
+
+@keyframes piscarVerde {
+  0% {
+    background-color: #132f4c;
+  }
+  50% {
+    background-color: #1b5e20;
+  }
+  100% {
+    background-color: #132f4c;
+  }
 }
 </style>

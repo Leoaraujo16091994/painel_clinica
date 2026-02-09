@@ -64,14 +64,14 @@ Route::prefix('chamada')->group(function () {
 
 
 
-Route::prefix('painel')->group(function () {
+// Route::prefix('painel')->group(function () {
 
-    // Último paciente chamado por sala
-    Route::get('ultimos', [PainelController::class, 'ultimosChamados']);
+//     // Último paciente chamado por sala
+//     Route::get('ultimos', [PainelController::class, 'ultimosChamados']);
 
-    // Próximo paciente a chamar (voz)
-    Route::get('proximo', [PainelController::class, 'proximoParaChamar']);
+//     // Próximo paciente a chamar (voz)
+//     Route::get('proximo', [PainelController::class, 'proximoParaChamar']);
 
-    // Marcar como já anunciado no painel
-    Route::post('{id}/confirmar-chamada', [PainelController::class, 'confirmarChamada']);
-});
+//     // Marcar como já anunciado no painel
+//     Route::post('{id}/confirmar-chamada', [PainelController::class, 'confirmarChamada']);
+// });
