@@ -33,12 +33,7 @@
           Cancelar
         </v-btn>
 
-        <v-btn
-          color="green"
-          variant="elevated"
-          :disabled="!formValido"
-          @click="salvar"
-        >
+        <v-btn color="green" variant="elevated" :disabled="!formValido" @click="salvar" >
           Salvar
         </v-btn>
       </v-card-actions>
@@ -61,13 +56,11 @@ const props = defineProps({
 /* emits */
 const emit = defineEmits(["update:modelValue", "salvo"]);
 
-/* dialog proxy */
 const dialog = computed({
   get: () => props.modelValue,
   set: (value) => emit("update:modelValue", value),
 });
 
-/* form */
 const formValido = ref(false);
 
 const form = ref({
@@ -75,10 +68,8 @@ const form = ref({
   sala: null,
 });
 
-/* pacientes para o autocomplete */
 const pacientes = ref([]);
 
-/* salas */
 const salas = [
   { label: "Sala 01", value: 1 },
   { label: "Sala 02", value: 2 },
@@ -101,7 +92,6 @@ watch(dialog, (aberto) => {
   }
 });
 
-/* ações */
 function limpar() {
   form.value = {
     paciente_id: null,
@@ -123,7 +113,6 @@ function salvar() {
   });
 }
 
-/* services */
 function carregarPacientes() {
   PacienteService.listar().then((res) => {
     pacientes.value = res.data;

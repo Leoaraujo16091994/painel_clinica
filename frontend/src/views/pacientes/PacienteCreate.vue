@@ -7,38 +7,13 @@
 
       <v-card-text>
         <v-form v-model="formValido">
-          <v-text-field
-            label="Nome"
-            v-model="form.nome_completo"
-            :rules="[(v) => !!v || 'Nome é obrigatório']"
-          />
+          <v-text-field label="Nome" v-model="form.nome_completo" :rules="[(v) => !!v || 'Nome é obrigatório']" />
 
-          <v-select
-            label="Dias de Atendimento"
-            v-model="form.dias_semana"
-            :items="opcoesDia"
-            item-title="label"
-            item-value="value"
-            :rules="[(v) => !!v || 'Campo obrigatório']"
-          />
+          <v-select label="Dias de Atendimento" v-model="form.dias_semana" :items="opcoesDia" item-title="label" item-value="value" :rules="[(v) => !!v || 'Campo obrigatório']" />
 
-          <v-select
-            label="Sala"
-            v-model="form.sala"
-            :items="salas"
-            item-title="label"
-            item-value="value"
-            :rules="[(v) => !!v || 'Campo obrigatório']"
-          />
+          <v-select label="Sala" v-model="form.sala" :items="salas" item-title="label" item-value="value" :rules="[(v) => !!v || 'Campo obrigatório']" />
 
-          <v-select
-            label="Turno"
-            v-model="form.turno"
-            :items="turnos"
-            item-title="label"
-            item-value="value"
-            :rules="[(v) => !!v || 'Campo obrigatório']"
-          />
+          <v-select label="Turno" v-model="form.turno" :items="turnos" item-title="label" item-value="value" :rules="[(v) => !!v || 'Campo obrigatório']" />
         </v-form>
       </v-card-text>
 
@@ -47,12 +22,7 @@
           Cancelar
         </v-btn>
 
-        <v-btn
-          color="green"
-          variant="elevated"
-          :disabled="!formValido"
-          @click="salvar"
-        >
+        <v-btn color="green" variant="elevated" :disabled="!formValido" @click="salvar" >
           Salvar
         </v-btn>
       </v-card-actions>
@@ -64,7 +34,6 @@
 import { ref, computed, watch } from "vue";
 import PacienteService from "@/services/PacienteService";
 
-/* props */
 const props = defineProps({
   modelValue: {
     type: Boolean,
@@ -76,16 +45,13 @@ const props = defineProps({
   },
 });
 
-/* emits */
 const emit = defineEmits(["update:modelValue", "salvo"]);
 
-/* dialog proxy */
 const dialog = computed({
   get: () => props.modelValue,
   set: (value) => emit("update:modelValue", value),
 });
 
-/* form */
 const formValido = ref(false);
 
 const form = ref({
@@ -96,7 +62,6 @@ const form = ref({
   turno: null,
 });
 
-/* opções */
 const opcoesDia = [
   { label: "1 - Seg, Qua, Sex", value: 1 },
   { label: "2 - Ter, Qui, Sab", value: 2 },
@@ -123,7 +88,6 @@ const turnos = [
   { label: "Noite", value: 3 },
 ];
 
-/* preencher ao editar */
 watch(
   () => props.paciente,
   (novoPaciente) => {
@@ -140,7 +104,6 @@ watch(
   { immediate: true }
 );
 
-/* ações */
 function limpar() {
   form.value = {
     id: null,
@@ -158,14 +121,12 @@ function fechar() {
 
 function salvar() {
   if (form.value.id) {
-    // EDITAR
     PacienteService.atualizar(form.value.id, form.value)
       .then(() => {
         emit("salvo");
         fechar();
       });
   } else {
-    // CADASTRAR
     PacienteService.criar(form.value)
       .then(() => {
         emit("salvo");

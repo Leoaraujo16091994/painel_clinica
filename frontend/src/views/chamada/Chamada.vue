@@ -1,11 +1,11 @@
 <template>
-   <v-snackbar v-model="snackbar.show" :color="snackbar.color" location="top" timeout="3000">
+  <v-snackbar v-model="snackbar.show" :color="snackbar.color" location="top" timeout="3000">
     {{ snackbar.text }}
   </v-snackbar>
+
   <v-container fluid>
     <v-row>
-      <v-col
-        v-for="sala in salasPermitidas" :key="sala" cols="12" md="6" >
+      <v-col v-for="sala in salasPermitidas" :key="sala" cols="12" md="6" >
         <v-card>
           <v-card-title class="bg-primary text-white">
             Sala {{ sala }}
@@ -27,7 +27,7 @@
 
               <template #append>
                 <!-- CHAMAR -->
-                <v-btn icon="mdi-phone" color="green" variant="text" :disabled="!p.chegou || p.chamado" @click="abrirModalChamarPaciente(p)" />
+                <v-btn icon="mdi-phone" color="green" variant="text" :disabled="!p.chegou || p.chamado" @click="abrirModalChamada(p)" />
 
                 <!-- MENU -->
                 <v-menu>
@@ -55,55 +55,41 @@
       </v-col>
     </v-row>
 
-    <!-- MODAL TROCA DE SALA -->
-    <v-dialog v-model="dialogTrocarSala" max-width="400">
+    <ModalTrocaSala v-model="dialogTrocarSala" :paciente="pacienteSelecionado" :salas="salas" @confirmar="trocarSala" />
+
+    <!-- MODAL CONFIRMAR CHAMADA -->
+    <v-dialog v-model="dialogChamada" max-width="420">
       <v-card>
-        <v-card-title class="text-h6 bg-primary text-white">Trocar Sala</v-card-title>
+        <v-card-title class="text-h6 bg-primary text-white">
+          Confirmar chamada
+        </v-card-title>
 
         <v-card-text>
-          <v-text-field label="Paciente" :model-value="pacienteSelecionado?.paciente.nome_completo" disabled />
-          <v-select label="Nova Sala" :items="salas" v-model="novaSala" />
+          Tem certeza que deseja chamar o paciente
+          <strong>{{ pacienteSelecionado?.paciente.nome_completo }}</strong>?
         </v-card-text>
 
         <v-card-actions class="justify-end">
-          <v-btn color="red" variant="elevated" @click="dialogTrocarSala = false">Cancelar</v-btn>
-          <v-btn color="green" variant="elevated" @click="confirmarTrocaSala">Salvar</v-btn>
+          <v-btn color="red" variant="elevated" @click="dialogChamada = false">
+            Cancelar
+          </v-btn>
+
+          <v-btn color="green" variant="elevated" @click="confirmarChamada">
+            Confirmar
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-
-
-    <!-- MODAL CONFIRMAR CHAMADA  -->
-  <v-dialog v-model="dialogChamada" max-width="420">
-    <v-card>
-      <v-card-title class="text-h6 bg-primary text-white">
-        Confirmar chamada
-      </v-card-title>
-
-      <v-card-text>
-        Tem certeza que deseja chamar o paciente
-        <strong>{{ pacienteSelecionado?.paciente.nome_completo }}</strong>?
-      </v-card-text>
-
-      <v-card-actions class="justify-end">
-        <v-btn color="red" variant="elevated" @click="dialogChamada = false">
-          Cancelar
-        </v-btn>
-
-        <v-btn color="green" variant="elevated" @click="confirmarChamada(pacienteSelecionado)">
-          Confirmar
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
   </v-container>
 </template>
 
 <script setup>
 import { ref, onMounted, inject } from 'vue'
 import PacienteDiaService from '@/services/PacienteDiaService'
+import ModalTrocaSala from '../components/ModalTrocaSala.vue'
 
-// Todas as salas possíveis
+const snackbar = inject('snackbar')
+
 const salas = [
   { title: 'Sala 01', value: 1 },
   { title: 'Sala 02', value: 2 },
@@ -119,64 +105,53 @@ const salas = [
   { title: 'Sala C', value: 12 },
 ]
 
-// 🔐 Exemplo: vindo do backend conforme perfil logado
 const salasPermitidas = ref([1, 2])
-
-// Lista completa do dia
 const pacientesDoDia = ref([])
 
 const dialogTrocarSala = ref(false)
 const dialogChamada = ref(false)
 const pacienteSelecionado = ref(null)
-const novaSala = ref(null)
 
-const snackbar = inject('snackbar')
-
-// 🔄 Carregar pacientes do dia
 async function carregarPacientes() {
-  const { data } = await PacienteDiaService.listar();
+  const { data } = await PacienteDiaService.listar()
   pacientesDoDia.value = data
 }
 
-// 📌 Filtrar por sala
 function pacientesPorSala(sala) {
   return pacientesDoDia.value.filter(p => p.sala_dia === sala)
 }
 
-function abrirModalChamarPaciente(paciente) {
+function abrirModalChamada(paciente) {
   pacienteSelecionado.value = paciente
   dialogChamada.value = true
 }
 
-// 📞 Chamar paciente
-function confirmarChamada(paciente) {
-   PacienteDiaService.confirmarChamada(paciente.id).then(() => {
-    paciente.chamado = true
+function confirmarChamada() {
+  PacienteDiaService.confirmarChamada(pacienteSelecionado.value.id).then(() => {
+    pacienteSelecionado.value.chamado = true
 
     snackbar.value.text = "Chamada confirmada"
     snackbar.value.color = "success"
     snackbar.value.show = true
+
     dialogChamada.value = false
   })
 }
 
-// 🔁 Trocar sala
 function abrirTrocaSala(paciente) {
   pacienteSelecionado.value = paciente
-  novaSala.value = paciente.sala_dia
   dialogTrocarSala.value = true
 }
 
-function confirmarTrocaSala() {
-  PacienteDiaService.trocarSala(pacienteSelecionado.value.id, novaSala.value)
-    .then(() => {
-      pacienteSelecionado.value.sala_dia = novaSala.value
-      dialogTrocarSala.value = false
+function trocarSala(novaSala) {
+  PacienteDiaService.trocarSala(pacienteSelecionado.value.id, novaSala).then(() => {
+    pacienteSelecionado.value.sala_dia = novaSala
 
     snackbar.value.text = "Troca de sala confirmada"
     snackbar.value.color = "success"
     snackbar.value.show = true
-    })
+  })
 }
+
 onMounted(carregarPacientes)
 </script>

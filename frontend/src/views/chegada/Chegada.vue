@@ -6,8 +6,10 @@
   <v-card>
     <v-card-title class="d-flex align-center justify-space-between">
       <span>Chegada de Pacientes (Hoje)</span>
+
       <div class="d-flex align-center">
         <v-text-field v-model="filtroNome" label="Pesquisar por nome" density="compact" prepend-inner-icon="mdi-magnify" class="mr-3" hide-details style="width: 300px" />
+
         <v-btn color="primary" prepend-icon="mdi-plus" @click="abrirCadastroExtra">
           Paciente Extra
         </v-btn>
@@ -16,7 +18,7 @@
 
     <v-divider />
 
-    <v-data-table :headers="headers" :items="pacientesFiltrados" item-key="id" >
+    <v-data-table :headers="headers" :items="pacientesFiltrados" item-key="id">
       <template #item.nome="{ item }">
         {{ item.paciente?.nome_completo || 'Paciente Extra' }}
       </template>
@@ -38,29 +40,20 @@
     </v-data-table>
   </v-card>
 
-  <PacienteExtra v-model="modalPacienteExtra" @salvo="onPacienteSalvo"/>
+  <PacienteExtra v-model="modalPacienteExtra" @salvo="onPacienteSalvo" />
 
-  <!-- MODAL TROCA DE SALA -->
-  <v-dialog v-model="modalTrocaSala" max-width="400">
-    <v-card>
-      <v-card-title class="text-h6 bg-primary text-white">Trocar Sala</v-card-title>
+  <!-- MODAL TROCA DE SALA (REUTILIZÁVEL) -->
+  <ModalTrocaSala
+    v-model="modalTrocaSala"
+    :paciente="pacienteSelecionado"
+    :salas="salas"
+    @confirmar="trocarSala"
+  />
 
-      <v-card-text>
-        <v-text-field label="Paciente" :model-value="pacienteSelecionado?.paciente.nome_completo" disabled />
-        <v-select label="Nova Sala" :items="salas" v-model="novaSala" />
-      </v-card-text>
-
-      <v-card-actions class="justify-end">
-        <v-btn color="red" variant="elevated" @click="modalTrocaSala = false">Cancelar</v-btn>
-        <v-btn color="green" variant="elevated" @click="confirmarTrocaSala">Salvar</v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
-
-<!-- MODAL CONFIRMAÇÃO Chegada -->
+  <!-- MODAL CONFIRMAR CHEGADA -->
   <v-dialog v-model="modalConfirmaChegada" max-width="420">
     <v-card>
-      <v-card-title class="text-h6 bg-primary text-white" >
+      <v-card-title class="text-h6 bg-primary text-white">
         Confirmar chegada
       </v-card-title>
 
@@ -86,7 +79,7 @@
 import { ref, computed, onMounted, inject } from 'vue'
 import PacienteDiaService from '@/services/PacienteDiaService'
 import PacienteExtra from '@/views/pacientes/PacienteExtra.vue'
-
+import ModalTrocaSala from '../components/ModalTrocaSala.vue'
 
 const snackbar = inject('snackbar')
 
@@ -96,7 +89,6 @@ const modalPacienteExtra = ref(false)
 const modalTrocaSala = ref(false)
 const modalConfirmaChegada = ref(false)
 const pacienteSelecionado = ref(null)
-const novaSala = ref(null)
 
 const salas = [
   { title: 'Sala 01', value: 1 },
@@ -129,33 +121,22 @@ const pacientesFiltrados = computed(() => {
   )
 })
 
-function onPacienteSalvo() {
-  carregarPacientes()
-  pacienteSelecionado.value = null
-
-  snackbar.value.text = "Paciente salvo com sucesso"
-  snackbar.value.color = "success"
-  snackbar.value.show = true
-}
-
 function carregarPacientes() {
   PacienteDiaService.listar().then(res => {
     pacientes.value = res.data
   })
 }
 
-
 function abrirTrocaSala(paciente) {
   pacienteSelecionado.value = paciente
-  novaSala.value = paciente.sala_dia
   modalTrocaSala.value = true
 }
 
-function confirmarTrocaSala() {
-  PacienteDiaService.trocarSala(pacienteSelecionado.value.id, novaSala.value)
+function trocarSala(novaSala) {
+  PacienteDiaService.trocarSala(pacienteSelecionado.value.id, novaSala)
     .then(() => {
-      pacienteSelecionado.value.sala_dia = novaSala.value
-      modalTrocaSala.value = false
+      pacienteSelecionado.value.sala_dia = novaSala
+
       snackbar.value.text = "Troca de sala confirmada"
       snackbar.value.color = "success"
       snackbar.value.show = true
@@ -167,10 +148,9 @@ function abrirCadastroExtra() {
 }
 
 function abrirConfirmarChegada(paciente) {
-  modalConfirmaChegada.value = true
   pacienteSelecionado.value = paciente
+  modalConfirmaChegada.value = true
 }
-
 
 function confirmarChegada(paciente) {
   PacienteDiaService.confirmarChegada(paciente.id).then(() => {
@@ -184,10 +164,9 @@ function confirmarChegada(paciente) {
   })
 }
 
-
-
+function onPacienteSalvo() {
+  carregarPacientes()
+}
 
 onMounted(carregarPacientes)
 </script>
-
-
